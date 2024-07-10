@@ -2,12 +2,12 @@ import React, { useEffect, useRef, useState } from 'react'
 import io from 'socket.io-client';
 
 let instVal = false;
+const storedObject = localStorage.getItem('params');
 export default function StreamPage() {
     const [isStreaming, setIsStreaming] = useState(false);
-    const [currentCamera, setCurrentCamera] = useState('user');
     const mediaStream = useRef(null);
     const socket = useRef(null);
-    const [values, setValues] = useState({ w: 1920, h: 1080, cid: 0 });
+    const [values, setValues] = useState(storedObject ? JSON.parse(storedObject) : { w: 1280, h: 720, cid: 0 });
     const [devices, setDevices] = useState([]);
 
     useEffect(() => {
@@ -55,14 +55,6 @@ export default function StreamPage() {
         socket.current.emit('stop_recording');
     };
 
-    const switchCamera = async () => {
-        setCurrentCamera(prevCamera => (prevCamera === 'user' ? 'environment' : 'user'));
-        if (isStreaming) {
-            stopStreaming();
-            await startStreaming();
-        }
-    };
-
     const sendFrames = async () => {
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
@@ -77,21 +69,24 @@ export default function StreamPage() {
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             const imageData = canvas.toDataURL('image/jpeg');
             socket.current.emit('frame', { image: imageData });
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 50));
         }
     };
 
     function handleValuesChange(e) {
         const name = e.target.name;
         const value = e.target.value;
-        setValues((prev) => ({ ...prev, [name]: value }))
+        setValues((prev) => {
+            const newValues = { ...prev, [name]: value };
+            localStorage.setItem('params', JSON.stringify(newValues));
+            return newValues
+        })
     }
 
     async function getids() {
         if (!navigator.mediaDevices?.enumerateDevices) {
             alert("enumerateDevices() not supported.");
         } else {
-            // List cameras and microphones.
             navigator.mediaDevices
                 .enumerateDevices()
                 .then((devices) => {
@@ -110,15 +105,11 @@ export default function StreamPage() {
                 {isStreaming ? 'Stop Streaming' : 'Start Streaming'}
             </button>
             <br />
-            <button onClick={switchCamera}>
-                Switch Camera - {currentCamera}
-            </button>
-            <select name="cid" onChange={handleValuesChange} value={values.cid} className='text-black'>
-                {devices.map((device, i) => <option key={i} value={device.deviceId}>{device.label}</option>)}
-            </select>
-            <div >
-                {/* <div>Camera id <input className='text-gray-900 px-3' type="text" value={values.cid} onChange={handleValuesChange} name='cid' /></div> */}
-                <div>width <input className='text-gray-900 px-3' type="number" value={values.w} onChange={handleValuesChange} name='w' /></div>
+            <div>
+                <select name="cid" onChange={handleValuesChange} value={values.cid} className='text-black'>
+                    {devices.map((device, i) => <option key={i} value={device.deviceId}>{device.label}</option>)}
+                </select>
+                <div>width <input className='text-gray-900 px-3 my-2' type="number" value={values.w} onChange={handleValuesChange} name='w' /></div>
                 <div>height <input className='text-gray-900 px-3' type="number" value={values.h} onChange={handleValuesChange} name='h' /></div>
             </div>
 
