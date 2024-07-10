@@ -32,7 +32,7 @@ def video():
 def update_frames():
     global nostream
     while True:
-        time.sleep(0.05) # adjust here for fps
+        time.sleep(0.02) # adjust here for fps
         if latest_frame: yield(b'--frame\r\n'+b'Content-Type: image/jpeg\r\n\r\n' + latest_frame + b'\r\n')
         else: yield(b'--frame\r\n'+b'Content-Type: image/jpeg\r\n\r\n' + nostream + b'\r\n')
             
