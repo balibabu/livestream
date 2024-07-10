@@ -87,7 +87,7 @@ export default function StreamPage() {
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             const imageData = canvas.toDataURL('image/jpeg');
             socket.current.emit('frame', { image: imageData });
-            await new Promise(resolve => setTimeout(resolve, 50));
+            await new Promise(resolve => setTimeout(resolve, 20));
         }
     };
 
