@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 
 export default function WatchStream() {
-    const [isPortrait,] = useState(window.innerWidth < window.innerHeight ? 'w-full' : 'h-full');
     const [rotate, setRotate] = useState(0);
 
     return (

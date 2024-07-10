@@ -9,6 +9,7 @@ export default function StreamPage() {
     const socket = useRef(null);
     const [values, setValues] = useState(storedObject ? JSON.parse(storedObject) : { w: 1280, h: 720, cid: 0 });
     const [devices, setDevices] = useState([]);
+    const wakeLock = useRef(null);
 
     useEffect(() => {
         socket.current = io();
@@ -40,6 +41,12 @@ export default function StreamPage() {
             mediaStream.current = await navigator.mediaDevices.getUserMedia(constraints);
             setIsStreaming(true);
             instVal = true;
+            try {
+                wakeLock.current = await navigator.wakeLock.request('screen');
+                console.log('Wake Lock is active');
+            } catch (err) {
+                console.error(`${err.name}, ${err.message}`);
+            }
             sendFrames();
         } catch (err) {
             console.error("Error accessing camera:", err);
@@ -53,6 +60,17 @@ export default function StreamPage() {
         setIsStreaming(false);
         instVal = false;
         socket.current.emit('stop_recording');
+        if (wakeLock.current) {
+            wakeLock.current.release()
+                .then(() => {
+                    wakeLock.current = null;
+                    console.log('Wake Lock has been released');
+                })
+                .catch((err) => {
+                    console.error(`${err.name}, ${err.message}`);
+                });
+        }
+
     };
 
     const sendFrames = async () => {
