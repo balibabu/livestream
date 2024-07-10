@@ -7,7 +7,7 @@ export default function StreamPage() {
     const [isStreaming, setIsStreaming] = useState(false);
     const mediaStream = useRef(null);
     const socket = useRef(null);
-    const [values, setValues] = useState(storedObject ? JSON.parse(storedObject) : { w: 1280, h: 720, cid: 0 });
+    const [values, setValues] = useState(storedObject ? JSON.parse(storedObject) : { w: 1280, h: 720, cid: 0, color: 8 });
     const [devices, setDevices] = useState([]);
     const wakeLock = useRef(null);
 
@@ -35,7 +35,8 @@ export default function StreamPage() {
                 video: {
                     deviceId: values.cid,
                     width: { ideal: values.w },
-                    height: { ideal: values.h }
+                    height: { ideal: values.h },
+                    colorDepth: { ideal: values.color }
                 }
             };
             mediaStream.current = await navigator.mediaDevices.getUserMedia(constraints);
@@ -87,7 +88,7 @@ export default function StreamPage() {
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             const imageData = canvas.toDataURL('image/jpeg');
             socket.current.emit('frame', { image: imageData });
-            await new Promise(resolve => setTimeout(resolve, 20));
+            await new Promise(resolve => setTimeout(resolve, 40)); // 24fps
         }
     };
 
@@ -128,7 +129,8 @@ export default function StreamPage() {
                     {devices.map((device, i) => <option key={i} value={device.deviceId}>{device.label}</option>)}
                 </select>
                 <div>width <input className='text-gray-900 px-3 my-2' type="number" value={values.w} onChange={handleValuesChange} name='w' /></div>
-                <div>height <input className='text-gray-900 px-3' type="number" value={values.h} onChange={handleValuesChange} name='h' /></div>
+                <div>height <input className='text-gray-900 px-3 mb-2' type="number" value={values.h} onChange={handleValuesChange} name='h' /></div>
+                <div>color depth <input className='text-gray-900 px-3' type="number" value={values.color} onChange={handleValuesChange} name='color' /></div>
             </div>
 
         </div>
